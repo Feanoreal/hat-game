@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Командная игра "Шляпа"</title>
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        body { background-color: #f8fafc; color: #1e293b; min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; -webkit-user-select: none; user-select: none; }
+        header { background-color: #4f46e5; color: white; text-align: center; padding: 12px; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); }
+        header h1 { font-size: 1.125rem; font-weight: 900; letter-spacing: 0.05em; }
+        main { max-width: 28rem; width: 100%; margin: 0 auto; padding: 16px; flex-grow: 1; display: flex; flex-direction: column; justify-content: center; }
+        
+        .screen { display: none; flex-direction: column; background-color: white; padding: 20px; border-radius: 16px; box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1); gap: 16px; }
+        .screen.active { display: flex; }
+        
+        h2 { font-size: 1.125rem; font-weight: 700; text-align: center; color: #334155; }
+        input[type="text"], input[type="number"] { width: 100%; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 16px; font-size: 1rem; outline: none; }
+        input:focus { border-color: #4f46e5; }
+        
+        button { width: 100%; border: none; border-radius: 12px; font-weight: 700; font-size: 1rem; cursor: pointer; padding: 14px; text-align: center; }
+        button:active { transform: scale(0.98); }
+        .btn-primary { background-color: #4f46e5; color: white; }
+        .btn-success { background-color: #10b981; color: white; }
+        
+        ul { list-style: none; max-height: 160px; overflow-y: auto; background-color: #f8fafc; padding: 8px; border-radius: 12px; border: 1px solid #f1f5f9; gap: 8px; display: flex; flex-direction: column; }
+        li { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; background: white; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.875rem; }
+        .btn-delete { color: #ef4444; font-weight: bold; background: none; padding: 0 8px; width: auto; font-size: 1.1rem; }
+        
+        .setting-row { display: flex; flex-direction: column; gap: 4px; background-color: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; }
+        .setting-row label { font-size: 0.75rem; font-weight: 600; color: #64748b; }
+        .setting-row input { text-align: center; font-weight: 900; color: #4f46e5; font-size: 1.125rem; padding: 6px; }
+        
+        .role-card { padding: 12px; border-radius: 12px; text-align: center; border: 1px solid; }
+        .role-explain { background-color: #e0e7ff; border-color: #c7d2fe; }
+        .role-explain strong { color: #3730a3; font-size: 1.25rem; }
+        .role-guess { background-color: #d1fae5; border-color: #a7f3d0; }
+        .role-guess strong { color: #065f46; font-size: 1.25rem; }
+        .role-card span { font-size: 0.75rem; font-weight: 700; color: #64748b; text-transform: uppercase; display: block; margin-bottom: 2px; }
+        .rule-box { background-color: #f8fafc; padding: 12px; border-radius: 12px; border: 1px solid #f1f5f9; font-size: 0.75rem; color: #475569; text-align: left; line-height: 1.4; }
+        .joker-badge { font-size: 0.75rem; font-weight: 700; color: #b45309; background-color: #fef3c7; padding: 6px 12px; border-radius: 9999px; display: inline-block; margin: 0 auto 8px auto; text-align: center; }
+        
+        .game-info { display: flex; flex-direction: column; align-items: center; gap: 4px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px; }
+        .timer { width: 3.5rem; height: 3.5rem; background-color: #f59e0b; color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; font-weight: 900; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); margin-top: 4px; }
+        
+        .word-card { background-color: #0f172a; border: 4px solid #4f46e5; border-radius: 16px; padding: 40px 16px; min-height: 150px; display: flex; align-items: center; justify-content: center; margin: 4px 0; }
+        #current-word { color: #facc15; font-size: 36px !important; font-weight: 900 !important; text-transform: uppercase !important; text-align: center; letter-spacing: 1px; text-shadow: 0 2px 4px rgba(0,0,0,0.8); }
+        @media (min-width: 400px) { #current-word { font-size: 46px !important; } }
+        
+        .btn-game { padding: 20px; font-size: 1.25rem; text-transform: uppercase; letter-spacing: 0.05em; }
+        .result-item { display: flex; justify-content: space-between; align-items: center; background-color: #f1f5f9; padding: 12px 16px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .result-team { font-weight: 900; font-size: 1rem; color: #1e293b; }
+        .result-members { font-size: 0.75rem; color: #64748b; margin-top: 2px; }
+        .score-badge { background-color: #4f46e5; color: white; padding: 6px 12px; border-radius: 9999px; font-size: 0.875rem; font-weight: 900; }
+        footer { text-align: center; padding: 8px; font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+        .truncate { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; max-width: 200px; display: block; }
+    </style>
+</head>
+<body>
+    <header><h1>🎩 КОМАНДНАЯ «ШЛЯПА»</h1></header>
+    <main>
+        <div id="screen-setup" class="screen active">
+            <h2>Участники игры</h2>
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input id="player-name-input" type="text" placeholder="Имя игрока">
+                <button onclick="addPlayer()" class="btn-primary">+ Добавить игрока</button>
+            </div>
+            <ul id="players-list"></ul>
+            <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid #e2e8f0; padding-top: 12px;">
+                <div class="setting-row"><label>Секунд на ход:</label><input id="timer-settings" type="number" value="20"></div>
+                <div class="setting-row"><label>Слов в игре:</label><input id="words-count-settings" type="number" value="30"></div>
+            </div>
+            <button onclick="generateTeamsAndStart()" class="btn-success" style="padding: 16px;">Поделиться на пары и начать! 🚀</button>
+        </div>
+
+        <div id="screen-ready" class="screen" style="text-align: center;">
+            <div style="display: flex; flex-direction: column; align-items: center;">
+                <div id="joker-alert" class="joker-badge hidden"></div>
+                <span style="font-size: 0.75rem; font-weight: 700; color: #94a3b8; text-transform: uppercase;">Сейчас играет</span>
+                <div id="active-team-name"></div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 8px; width: 100%;">
+                <div class="role-card role-explain"><span>🗣️ Объясняет</span><strong id="active-explainer-name" class="truncate" style="margin: 0 auto;"></strong></div>
+                <div class="role-card role-guess"><span>👂 Отгадывает</span><strong id="active-guesser-name" class="truncate" style="margin: 0 auto;"></strong></div>
+            </div>
+            <div class="rule-box"><strong>📍 Правило:</strong> Объясняйте слова любыми фразами, без использования однокоренных слов и перевода.</div>
+            <div style="font-size: 0.75rem; font-weight: 600; color: #94a3b8; background-color: #f8fafc; padding: 8px; border-radius: 8px;">
+                Осталось слов в шляпе: <span id="hat-words-count" style="font-weight: 900; color: #334155;">0</span>
+            </div>
+            <button onclick="startTurn()" class="btn-success" style="padding: 18px;">МЫ ГОТОВЫ! ПОЕХАЛИ 🏁</button>
+        </div>
+
+        <div id="screen-game" class="screen">
+            <div class="game-info">
+                <div id="game-team-name" style="font-weight: 900; color: #334155;"></div>
+                <div style="font-size: 0.75rem; font-weight: 700; color: #6366f1;">Объясняет: <span id="game-explainer-name"></span></div>
+                <div id="timer-display" class="timer">20</div>
+            </div>
+            <div class="word-card"><span id="current-word">СЛОВО</span></div>
+            <button onclick="wordGuessed()" class="btn-success btn-game">УГАДАНО! ✅</button>
+        </div>
+
+        <div id="screen-results" class="screen">
+            <h2 style="font-size: 1.25rem; font-weight: 900; border-bottom: 1px solid #e2e8f0; padding-bottom: 8px;">🏆 Игра завершена!</h2>
+            <div id="scoreboard" style="display: flex; flex-direction: column; gap: 8px; max-height: 220px; overflow-y: auto;"></div>
+            <button onclick="resetGame()" class="btn-primary" style="padding: 16px;">Играть сначала 🔄</button>
+        </div>
+    </main>
+    <footer>Командная версия игры «Шляпа» 🎩</footer>
+
+//---------------------
+    <script>
+        const DICTIONARY = [
+            "Алиби", "Амбиции", "Авантюра", "Аплодисменты", "Айсберг", "Аромат", "Аукцион", "Абсурд", "Азарт", "Амулет",
+            "Антракт", "Аппетит", "Аристократ", "Атмосфера", "Аттракцион", "Автограф", "Агент", "Альпинист", "Аномалия",
+            "Багаж", "Бессонница", "Бумеранг", "Бальзам", "Барометр", "Бархат", "Бассейн", "Батискаф", "Беглец", "Блеф",
+            "Блокнот", "Бойкот", "Бортпроводник", "Браконьер", "Брызги", "Бутафория", "Бульдозер", "Бюджет", "Бюрократ",
+            "Вулкан", "Вдохновение", "Вечность", "Вегетарианец", "Вентиляция", "Вердикт", "Вестибюль", "Вираж", "Вирус", "Витрина",
+            "Всадник", "Вспышка", "Выговор", "Выставка", "Вакцина", "Валюта", "Вандалы", "Ваниль", "Галактика", "Гармония",
+            "Гипноз", "Головоломка", "Гравитация", "Граффити", "Гримаса", "Гладиатор", "Глянец", "Горизонт", "Гостиница", "Гонщик",
+            "Дежавю", "Диагноз", "Диета", "Дирижер", "Дистанция", "Детектив", "Дефицит", "Диверсант", "Диктатор", "Дилемма",
+            "Дирижабль", "Дискуссия", "Дисциплина", "Документ", "Допинг", "Драма", "Дублер", "Ежедневник", "Единорог", "Ерунда",
+            "Жалюзи", "Жестикуляция", "Живопись", "Жонглер", "Жадина", "Жажда", "Жемчужина", "Жертва", "Жетон", "Журналист",
+            "Зависть", "Загадка", "Затмение", "Зоопарк", "Зубочистка", "Завещание", "Заложник", "Заповедник", "Занавес", "Заговор",
+            "Иллюзия", "Интуиция", "Иммунитет", "Интрига", "Интервью", "Инстинкт", "Инвестиции", "Ингредиент", "Инкогнито", "Ирония",
+            "Камуфляж", "Караоке", "Карнавал", "Катастрофа", "Компромисс", "Конкурент", "Контраст", "Копыто", "Коррозия", "Космос",
+            "Кратер", "Кризис", "Критика", "Кругосветка", "Кулисы", "Кульминация", "Курьер", "Карантин", "Карикатура", "Каскадер",
+            "Лабиринт", "Лотерея", "Легенда", "Лихорадка", "Лавина", "Лаборатория", "Ландшафт", "Лассо", "Лауреат", "Ледник",
+            "Манипуляция", "Марафон", "Маскарад", "Маэстро", "Мегаполис", "Мелодрама", "Метафора", "Метеорит", "Мимика", "Мираж",
+            "Ностальгия", "Навигатор", "Натюрморт", "Невесомость", "Нюанс", "Награда", "Налог", "Намек", "Напарник", "Нервы",
+            "Оазис", "Овация", "Олигарх", "Оптимизм", "Оратор", "Оригинал", "Орнамент", "Олимпиада", "Операция", "Оркестр",
+            "Парадокс", "Паразит", "Парфюм", "Патриот", "Пессимизм", "Пирамида", "Плагиат", "Плантация", "Платформа", "Подиум",
+            "Радар", "Раритет", "Репутация", "Рефлекс", "Рецензия", "Ритуал", "Розыгрыш", "Рутина", "Равновесие", "Радиация",
+            "Саботаж", "Сарказм", "Секрет", "Симптом", "Сиеста", "Силуэт", "Скептик", "Скульптура", "Снайпер", "Спонсор",
+            "Талисман", "Татуировка", "Телепатия", "Территория", "Технология", "Традиция", "Трагедия", "Трансляция", "Трофей", "Таможня",
+            "Убежище", "Ультиматум", "Униформа", "Ураган", "Улика", "Утопия", "Уважение", "Улыбка", "Управление", "Ускорение",
+            "Фаворит", "Фантазия", "Феномен", "Фестиваль", "Фиаско", "Флюгер", "Фокусник", "Фортуна", "Фотосессия", "Франшиза",
+            "Харизма", "Хаос", "Хирург", "Хобби", "Холст", "Хроника", "Хрусталь", "Хамелеон", "Церемония", "Цитата",
+            "Шедевр", "Шантаж", "Шпион", "Штурм", "Шериф", "Шифр", "Шлагбаум", "Шлейф", "Шоколад", "Эвакуация",
+            "Эволюция", "Эгоист", "Экзамен", "Экипаж", "Эксперимент", "Эксперт", "Экспонат", "Юбилей", "Ювелир", "Ярмарка"
+        ];
+
+//-----------------------------
+        let game = { players: [], teams: [], wordsPool: [], hat: [], currentTeamIdx: 0, turnDuration: 20 };
+        let timerInterval = null;
+        let timeLeft = 0;
+
+        function showScreen(screenId) {
+            document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function addPlayer() {
+            const input = document.getElementById('player-name-input');
+            const name = input.value.trim();
+            if (!name) return;
+            if (game.players.some(p => p.toLowerCase() === name.toLowerCase())) {
+                alert('Игрок с таким именем уже есть!');
+                return;
+            }
+            game.players.push(name);
+            input.value = '';
+            renderPlayersList();
+        }
+
+        function renderPlayersList() {
+            document.getElementById('players-list').innerHTML = game.players.map((p, idx) => `
+                <li>
+                    <span>${idx + 1}. <strong style="color: #334155;">${p}</strong></span>
+                    <button onclick="removePlayer(${idx})" class="btn-delete">✕</button>
+                </li>
+            `).join('');
+        }
+
+        function removePlayer(idx) {
+            game.players.splice(idx, 1);
+            renderPlayersList();
+        }
+
+        function generateTeamsAndStart() {
+            if (game.players.length < 2) {
+                alert('Нужно минимум 2 игрока!');
+                return;
+            }
+            game.turnDuration = parseInt(document.getElementById('timer-settings').value) || 20;
+            const requestedWordsCount = parseInt(document.getElementById('words-count-settings').value) || 30;
+            if (requestedWordsCount > DICTIONARY.length) {
+                alert(`В базе всего ${DICTIONARY.length} слов. Выберите число меньше.`);
+                return;
+            }
+
+            const shuffledPlayers = [...game.players].sort(() => Math.random() - 0.5);
+            game.teams = [];
+
+            for (let i = 0; i < shuffledPlayers.length; i += 2) {
+                if (i + 1 < shuffledPlayers.length) {
+                    game.teams.push({
+                        name: `Команда ${game.teams.length + 1}`,
+                        p1: shuffledPlayers[i],
+                        p2: shuffledPlayers[i+1],
+                        score: 0,
+                        hasJoker: false
+                    });
+                } else {
+                    const jokerPlayer = shuffledPlayers[i];
+                    const helperPlayer = game.teams[0].p1;
+                    game.teams.push({
+                        name: `Команда ${game.teams.length + 1}`,
+                        p1: helperPlayer,
+                        p2: jokerPlayer,
+                        score: 0,
+                        hasJoker: true,
+                        jokerName: helperPlayer
+                    });
+                }
+            }
+
+            const shuffledDict = [...DICTIONARY].sort(() => Math.random() - 0.5);
+            game.wordsPool = shuffledDict.slice(0, requestedWordsCount);
+            game.hat = [...game.wordsPool];
+            game.currentTeamIdx = 0;
+            prepareTurnScreen();
+        }
+
+        function prepareTurnScreen() {
+            if (game.hat.length === 0) {
+                endGame();
+                return;
+            }
+            const currentTeam = game.teams[game.currentTeamIdx];
+            document.getElementById('active-team-name').innerText = currentTeam.name;
+            document.getElementById('active-explainer-name').innerText = currentTeam.p1;
+            document.getElementById('active-guesser-name').innerText = currentTeam.p2;
+            document.getElementById('hat-words-count').innerText = game.hat.length;
+
+            const jokerAlert = document.getElementById('joker-alert');
+            if (currentTeam.hasJoker) {
+                jokerAlert.innerText = `⚠️ ${currentTeam.jokerName} играет за две команды!`;
+                jokerAlert.style.display = 'inline-block';
+            } else {
+                jokerAlert.style.display = 'none';
+            }
+            showScreen('screen-ready');
+        }
+
+        function startTurn() {
+            if (timerInterval) clearInterval(timerInterval);
+            timeLeft = game.turnDuration;
+            document.getElementById('timer-display').innerText = timeLeft;
+            
+            const currentTeam = game.teams[game.currentTeamIdx];
+            document.getElementById('game-team-name').innerText = currentTeam.name;
+            document.getElementById('game-explainer-name').innerText = currentTeam.p1;
+            showNextWord();
+            showScreen('screen-game');
+
+            timerInterval = setInterval(() => {
+                timeLeft--;
+                document.getElementById('timer-display').innerText = timeLeft;
+                if (timeLeft <= 0) {
+                    clearInterval(timerInterval);
+                    timerInterval = null;
+                    alert('Время вышло! Передайте телефон.');
+                    endTurn();
+                }
+            }, 1000);
+        }
+
+        function showNextWord() {
+            if (game.hat.length === 0) {
+                if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+                alert('Слова закончились!');
+                endGame();
+                return;
+            }
+            document.getElementById('current-word').innerText = game.hat[0];
+        }
+
+        function wordGuessed() {
+            game.teams[game.currentTeamIdx].score++;
+            game.hat.shift();
+            showNextWord();
+        }
+
+        function endTurn() {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            game.currentTeamIdx = (game.currentTeamIdx + 1) % game.teams.length;
+            
+            const nextTeam = game.teams[game.currentTeamIdx];
+            const temp = nextTeam.p1;
+            nextTeam.p1 = nextTeam.p2;
+            nextTeam.p2 = temp;
+            prepareTurnScreen();
+        }
+
+        function endGame() {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            showScreen('screen-results');
+            
+            const sortedTeams = [...game.teams].sort((a, b) => b.score - a.score);
+            const scoreboard = document.getElementById('scoreboard');
+            scoreboard.innerHTML = sortedTeams.map((t, idx) => `
+                <div class="result-item">
+                    <div>
+                        <div class="result-team">${idx + 1} место — ${t.name}</div>
+                        <div class="result-members">Состав: ${t.p1} и ${t.p2} ${t.hasJoker ? '(джокер)' : ''}</div>
+                    </div>
+                    <span class="score-badge">${t.score} слов</span>
+                </div>
+            `).join('');
+        }
+
+        function resetGame() {
+            if (timerInterval) { clearInterval(timerInterval); timerInterval = null; }
+            game.teams = [];
+            game.wordsPool = [];
+            game.hat = [];
+            game.currentTeamIdx = 0;
+            document.getElementById('players-list').innerHTML = '';
+            game.players = [];
+            showScreen('screen-setup');
+        }
+    </script>
+</body>
+</html>
+
